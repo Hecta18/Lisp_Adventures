@@ -3,9 +3,11 @@
 ;output = Split deL 
 
 setq token '()
+setq listaPreTokens '()
 setq listaTokens '()
 
 (defun concatenar (list)
+  ;Concatenates the elements of a list into a string.
   (with-output-to-string (stream)
   ;creates a character output stream, 
   ;performs a series of operations that may send results to this stream, 
@@ -16,48 +18,42 @@ setq listaTokens '()
       (format stream "~a" element))))
       ;format writes the elements to the stream
 
-(defun recorrerString (input)
-  "Tokenizes the input string."
+(defun tokenizerNoStructure (input)
+  ;Tokenizes the input string without considering the structure
   ;rango de caracteres
   (loop for i from 0 below (length input)
         ;es un espacio?
-        do (if (not (string= (check (char input i)) "space" ))
-              (progn ;used to execute multiple expressions in the then
-                        (setq listaToken (append listaToken (list (input i)))
-                        (recorrerString (subseq input (1+ i) (length input)))
-                        )
-                      )  
-        ;string= compares strings
-        ;not returns content if value false, otherwise return nil
-            )else(
-                  (if (string= (check (char input (1+ i)) "space"))
-                      (progn
-                        (setq listaToken (append listaToken (list (input i)))
+        do (if (not (string= (char input i) " " ))
+                ;not returns content if value false, otherwise return nil
+                    ;string= compares strings
+                                    ;char gets element of string by index.
+              (progn ;progn executes multiple expressions in the then
+                        (setq token (append token (input i))
                         (recorrerString (subseq input (1+ i) (length input)))
                         )
                       )
-                  )
+            )else(
+                  (setq listaPreTokens (append listaPreTokens (list (concatenar token))))
+                  (setq token '())
+            )
   )
 )
 
-(defun check (char)
-  "Checks the type of the character."
-  (case char
-    (#\Space "space")
-    (#\( "parenthesisOpen")
-    (#\) "parenthesisClose")
-    ((#\+ #\- #\* #\/) "operator")
-    ((#\0 #\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9) "number")
-    (t "unknown"))) ; Default case for characters not explicitly handled
-;assignments?
-;returns?
-;imports?
-;exports?
-;modules?
-;classes?
-;methods?
-;attributes?
-;inheritance?
-;interfaces?
-;exceptions
-;try?   
+(defun tokenizerWithStructure (listaPreTokens)
+  (loop for i from 0 below (length listaPreTokens)
+    do (if (string= (char (listaPreTokens i) 0) quote"(")
+            (while (not (string= (char (listaPreTokens i) 0) quote")" ))
+                   (setq token (append token (listaPreTokens i)))
+            )
+        )else(
+                (setq listaTokens (append listaTokens (list (concatenar token))))
+                (setq token '())
+              )
+  )
+)
+
+;test
+(format t "Ingrese la expresion dejando un espacio entre atoms~%")
+(let ((a (read)))
+  (format t "Resultado:~a~%" (tokenizerwithstructure (tokenizernostructure a)))
+)
