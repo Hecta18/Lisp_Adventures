@@ -1,10 +1,10 @@
 ;tokenizer
 ;input = String
-;output = Split deL 
+;output = List of tokens
 
-setq token '()
-setq listaPreTokens '()
-setq listaTokens '()
+(setq token nil)
+(setf listaPreTokens nil)
+(setf listaTokens nil)
 
 (defun concatenar (list)
   ;Concatenates the elements of a list into a string.
@@ -23,37 +23,48 @@ setq listaTokens '()
   ;rango de caracteres
   (loop for i from 0 below (length input)
         ;es un espacio?
-        do (if (not (string= (char input i) " " ))
+        do (if (not (char= (char input i) #\Space))
                 ;not returns content if value false, otherwise return nil
-                    ;string= compares strings
+                    ;char= compares characters
                                     ;char gets element of string by index.
-              (progn ;progn executes multiple expressions in the then
-                        (setq token (append token (input i))
-                        (recorrerString (subseq input (1+ i) (length input)))
-                        )
-                      )
-            )else(
-                  (setq listaPreTokens (append listaPreTokens (list (concatenar token))))
-                  (setq token '())
+            (progn ;progn executes multiple expressions in the then
+                      (push (char input i) token)
+                      ;push adds an element to the beginning of a list
+                      (loop for j from (1+ i) below (length input)
+                            do (if (not (char= (char input j) #\Space))
+                                   (push (char input j) token)
+                                   (return)))
+                      (setf token (nreverse token))
+                      ;nreverse returns the reverse of a list
             )
+            (progn
+                  (push (concatenar (nreverse token)) listaPreTokens)
+                  (setf token nil)
+            )
+          )
   )
 )
 
 (defun tokenizerWithStructure (listaPreTokens)
   (loop for i from 0 below (length listaPreTokens)
-    do (if (string= (char (listaPreTokens i) 0) quote"(")
-            (while (not (string= (char (listaPreTokens i) 0) quote")" ))
-                   (setq token (append token (listaPreTokens i)))
+    do (if (char= (char (elt listaPreTokens i) 0) #\()
+            (loop while (not (char= (char (elt listaPreTokens i) 0) #\)))
+              do (progn
+                (push (elt listaPreTokens i) token)
+                (incf i) ;incrementa i
+                 ))
+            (progn
+              (push (concatenar (nreverse token)) listaTokens)
+              (setf token nil)
             )
-        )else(
-                (setq listaTokens (append listaTokens (list (concatenar token))))
-                (setq token '())
-              )
-  )
+        )
+  )      
 )
 
 ;test
 (format t "Ingrese la expresion dejando un espacio entre atoms~%")
 (let ((a (read)))
-  (format t "Resultado:~a~%" (tokenizerwithstructure (tokenizernostructure a)))
+  (tokenizerNoStructure (princ-to-string a))
+  (tokenizerWithStructure (listaPreTokens))
+  (format t "Tokens: ~a~%" listaTokens)
 )
